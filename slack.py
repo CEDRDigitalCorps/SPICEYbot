@@ -4,11 +4,11 @@ import os
 slack_token = os.environ['SLACK_TOKEN']
 sc = SlackClient(slack_token)
 
-def say(msg):
+def say(msg, chan):
     print(sc.api_call(
       "chat.postMessage",
-      channel="@izwick-schachter",
+      channel=chan,
       text=msg
     ))
 
-say("Hi")
+say("Hi", "#twitterauthsearch)
