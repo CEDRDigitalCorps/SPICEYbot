@@ -11,4 +11,4 @@ def say(msg, chan):
       text=msg
     ))
 
-say("Hi", "#twitterauthsearch)
+say("I'm so glad to finally be alive!", "#twitterautosearch")
