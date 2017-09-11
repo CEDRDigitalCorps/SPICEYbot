@@ -22,3 +22,13 @@ Twitter and Slack credentials are needed, create a ``settings.ini`` file with th
    SLACK_TOKEN=<your-slack-token>
 
 Replacing the ``<*>`` strings with relevant keys, secrets, and tokens
+
+
+Deployment
+----------
+
+The run the deployment code script on server;
+
+.. code-block:: bash
+
+   $ /var/www/assistsearch/app/scripts/update.sh
