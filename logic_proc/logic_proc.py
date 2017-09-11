@@ -7,11 +7,17 @@ from textblob.classifiers import NaiveBayesClassifier
 import time
 from database_interface import database_interface
 
+TRAINING_FILE = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "../train.csv")
+)
+
+
 class LogicProc:
     def __init__(self, twitter_api, bot_mode=False):
         self.bot_mode = bot_mode
         self.twitter_api = twitter_api
-        with open('train.csv') as train_set:
+        print("Using training file: {}".format(TRAINING_FILE))
+        with open(TRAINING_FILE) as train_set:
             self.spam_classifier = NaiveBayesClassifier(train_set, format=None)
         self.slack_client = slack_interface.SlackInterface()
         self.message_queue = []
@@ -31,7 +37,7 @@ class LogicProc:
     def proc_messages(self):
         for msg in self.message_queue:
             if msg['source'] == 'twitter':
-                if is_spam(msg['message'].text) == False:
+                if self.is_spam(msg['message'].text) is False:
                     self.post_to_slack(msg)
                     self.store_message([msg['message'], False])
                 else:
@@ -50,11 +56,11 @@ class LogicProc:
         return filtered_results
 
     def post_to_slack(self, msg):
-        if bot_mode == True:
-            slack_client.api_call(
-              "chat.postMessage",
-              channel="@altuspresssec",
-              text=msg
+        if self.bot_mode is True:
+            self.slack_client.api_call(
+                "chat.postMessage",
+                channel="@altuspresssec",
+                text=msg
             )
 
     def poll_slack_reactions(self):
