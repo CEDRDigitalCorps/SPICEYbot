@@ -16,3 +16,4 @@ for i in range (0, 300):
 	cur_max_id = search_results[-1].id
 	results.extend(search_results)
 	print len(results)
+	
