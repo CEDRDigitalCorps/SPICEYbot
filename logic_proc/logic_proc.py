@@ -22,7 +22,7 @@ class LogicProc:
         self.slack_client = slack_interface.SlackInterface()
         self.message_queue = []
         self.db_interface = database_interface.DatabaseInterface()
-        self.run_loop()
+        # self.run_loop()
 
     def run_loop(self):
         while True:
@@ -51,7 +51,7 @@ class LogicProc:
             return True
 
     def bayesian_search(self, query):
-        results = self.api.search(query)
+        results = self.twitter_api.search(query)
         filtered_results = [r for r in results if self.is_spam(r.text) == 0]
         return filtered_results
 
@@ -68,8 +68,10 @@ class LogicProc:
 
     def store_messages(self, message):
         self.db_interface.add(message)
+
     def retrieve_message(self, msg):
         pass
+
     def message_exists(self, msg):
         pass
 
@@ -81,6 +83,7 @@ class LogicProc:
         which represent significant events occuring within the geographical areas or related
         to the list of input hashtags.'''
         pass
+
     def find_active_locations(self, bounding_box):
         '''Find areas within the bounding box which have a high volume of tweets.'''
         pass

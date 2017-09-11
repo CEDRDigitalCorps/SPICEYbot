@@ -1,5 +1,8 @@
 import tweepy
+
 from logic_proc import logic_proc
+
+
 class TwitterIngest():
     def __init__(self, consumer_key, consumer_secret, bot_mode=False, access_token=None, access_token_secret=None):
         print 'Starting CrowdRescue Twitter Autodiscovery Search Assistant and Bot a.k.a. SPICEY...'
