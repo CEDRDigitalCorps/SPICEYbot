@@ -5,8 +5,8 @@ class TwitterIngest():
         print 'Starting CrowdRescue Twitter Autodiscovery Search Assistant and Bot a.k.a. SPICEY...'
         print 'Starting API...'
         self.api = None
-        consumer_key = ''
-        consumer_secret = ''
+        consumer_key = consumer_key
+        consumer_secret = consumer_secret
         self.access_token = ''
         try:
             self.authenticate(
