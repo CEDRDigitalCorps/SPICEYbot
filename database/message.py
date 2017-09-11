@@ -11,7 +11,7 @@ class Message:
     def create_message_table(self):
         con = None
         try:
-            con = psycopg2.connect(database=self.database_name, user=self.user, password=password)
+            con = psycopg2.connect(database=self.database_name, user=self.user, password=self.database_password)
             cur = con.cursor()
             cur.execute("CREATE TABLE test (id serial PRIMARY KEY, url varchar(100), body text, entered boolean, discarded boolean, data json);")
             con.commit()
