@@ -20,6 +20,12 @@ Twitter and Slack credentials are needed, create a ``settings.ini`` file with th
    TWITTER_KEY=<your-twitter-key>
    TWITTER_SECRET=<your-twitter-secret>
    SLACK_TOKEN=<your-slack-token>
+   DATABASE_NAME=<db-table>
+   DATABASE_HOST=
+   DATABASE_TABLE=<db-table>
+   DATABASE_USER=<db-user>
+   DATABASE_PASSWORD=
+
 
 Replacing the ``<*>`` strings with relevant keys, secrets, and tokens
 
