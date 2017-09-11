@@ -17,11 +17,12 @@ def read(*files):
 
 
 setup(
-    name='scraper',
+    name='spicey',
     url='https://github.com/CrowdRescueHQ/media-slack-scraper',
     author='GrowdRescueHQ',
     description='A bot that scrapes social media into slack.',
     version=VERSION,
+    long_description=read('README.rst'),
     platforms=['any'],
     license='MIT License',
     classifiers=[
