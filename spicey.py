@@ -1,10 +1,11 @@
 from twitter_ingest import twitter_ingest
+from decouple import config
 
 class Spicey:
 
     def __init__(self, bot_mode=False):
-        twitter_api_consumer_key = ''
-        twitter_api_consumer_secret = ''
+        twitter_api_consumer_key = config("TWITTER_KEY", default="")
+        twitter_api_consumer_secret = config("TWITTER_SECRET", default="")
         self.twitter_interface = twitter_ingest.TwitterIngest(
             twitter_api_consumer_key,
             twitter_api_consumer_secret,
