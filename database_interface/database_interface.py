@@ -1,7 +1,7 @@
 import psycopg2
 import sys
 
-class Message:
+class DatabaseInterface:
     def __init__(self):
         self.database_password = 'ENV PASSWORD HERE'
         self.database_name: 'spicey'

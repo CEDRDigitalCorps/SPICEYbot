@@ -1,29 +1,28 @@
 import tweepy
-
-
+from logic_proc import logic_proc
 class TwitterIngest():
-
-    def __init__(self):
-        print 'Starting CrowdRescue Twitter Autodiscovery Bot a.k.a. IRMY...'
+    def __init__(self, consumer_key, consumer_secret, bot_mode=False):
+        print 'Starting CrowdRescue Twitter Autodiscovery Search Assistant and Bot a.k.a. SPICEY...'
         print 'Starting API...'
         self.api = None
         self.access_token = ''
         self.access_token_secret = ''
         try:
             self.authenticate(
-                '', #consumer_key
-                '') #consumer_secret
+                consumer_key, #consumer_key
+                consumer_secret) #consumer_secret
             print 'Success! Authenticated as User ' + self.api.me().name
         except Exception as e:
             print "Authentication Failed. " + str(e) + " Exiting..."
             quit()
-        print 'API connection established. Starting scrapers...'
-        self.stream_scraper = TwitterStreamScraper()
-        self.scraper = tweepy.Stream(
-            auth=self.api.auth,
-            listener=self.stream_scraper)
-        self.start_scrapers()
-
+        print 'API connection established. Establishing Search and Starting scrapers...'
+        if bot_mode:
+            self.stream_scraper = TwitterStreamScraper()
+            self.scraper = tweepy.Stream(
+               auth=self.api.auth,
+               listener=self.stream_scraper)
+            self.start_scrapers()
+        self.logic = logic_proc.LogicProc(self.api)
     def authenticate(self, consumer_key, consumer_secret):
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
         if self.access_token == '':
@@ -117,6 +116,9 @@ class TwitterIngest():
         ngrams = []  # Add the Harvey dataset n-grams after testing.
         return ngrams
 
+    def bayesian_search(self, query):
+        return logic.bayesian_search(query)
+
 
 class TwitterStreamScraper(tweepy.StreamListener):
     def on_error(self, status_code):
@@ -126,7 +128,7 @@ class TwitterStreamScraper(tweepy.StreamListener):
 
     def on_status(self, status):
         if not status.text[0:2] == "RT":
-            print(status.text) #output hook to proc goes here.
+            self.logic.add_new_message(status, 'twitter')
 
 
 if __name__ == '__main__':

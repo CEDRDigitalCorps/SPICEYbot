@@ -1,18 +1,18 @@
 from slackclient import SlackClient
 import os
 
-slack_token = os.environ['SLACK_TOKEN']
-sc = SlackClient(slack_token)
-
-class LogicProc:
+class SlackInterface:
     def __init__(self):
-        pass
+        slack_token = os.environ['SLACK_TOKEN']
+        self.sc = SlackClient(slack_token)
+
     def post_to_slack(self, msg):
-        sc.api_call(
+        self.sc.api_call(
           "chat.postMessage",
-          channel="#twitterautosearch",
+          channel="@altuspresssec",
           text=msg
         )
+
     def poll_slack_reactions(self):
         new_reacts_thing = {}
         messages = sc.api_call(
