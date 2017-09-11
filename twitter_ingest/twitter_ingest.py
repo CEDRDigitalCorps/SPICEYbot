@@ -5,8 +5,9 @@ class TwitterIngest():
         print 'Starting CrowdRescue Twitter Autodiscovery Search Assistant and Bot a.k.a. SPICEY...'
         print 'Starting API...'
         self.api = None
+        consumer_key = ''
+        consumer_secret = ''
         self.access_token = ''
-        self.access_token_secret = ''
         try:
             self.authenticate(
                 consumer_key, #consumer_key
@@ -14,7 +15,6 @@ class TwitterIngest():
             print 'Success! Authenticated as User ' + self.api.me().name
         except Exception as e:
             print "Authentication Failed. " + str(e) + " Exiting..."
-            quit()
         print 'API connection established. Establishing Search and Starting scrapers...'
         if bot_mode:
             self.stream_scraper = TwitterStreamScraper()
@@ -23,18 +23,18 @@ class TwitterIngest():
                listener=self.stream_scraper)
             self.start_scrapers()
         self.logic = logic_proc.LogicProc(self.api)
+
     def authenticate(self, consumer_key, consumer_secret):
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
         if self.access_token == '':
             # Get Access Token
             try:
                 redirect_url = auth.get_authorization_url()
+                print redirect_url
             except tweepy.TweepError:
                 print 'Error! Failed to get request token.'
-            request_token = auth.request_token
-            print redirect_url
+                quit()
             verifier = raw_input('Verifier Code:')
-            auth.request_token = request_token
             try:
                 print "Please go to this URL and permission the application."
                 auth.get_access_token(verifier)
