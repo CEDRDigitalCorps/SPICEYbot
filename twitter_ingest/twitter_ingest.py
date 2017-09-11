@@ -1,13 +1,14 @@
 import tweepy
 from logic_proc import logic_proc
 class TwitterIngest():
-    def __init__(self, consumer_key, consumer_secret, bot_mode=False):
+    def __init__(self, consumer_key, consumer_secret, bot_mode=False, access_token=None, access_token_secret=None):
         print 'Starting CrowdRescue Twitter Autodiscovery Search Assistant and Bot a.k.a. SPICEY...'
         print 'Starting API...'
         self.api = None
         consumer_key = consumer_key
         consumer_secret = consumer_secret
-        self.access_token = ''
+        self.access_token = access_token
+        self.access_token_secret = access_token_secret
         try:
             self.authenticate(
                 consumer_key, #consumer_key
@@ -26,7 +27,7 @@ class TwitterIngest():
 
     def authenticate(self, consumer_key, consumer_secret):
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-        if self.access_token == '':
+        if self.access_token is None:
             # Get Access Token
             try:
                 redirect_url = auth.get_authorization_url()
