@@ -118,7 +118,7 @@ class TwitterIngest():
         return ngrams
 
     def bayesian_search(self, query):
-        return logic.bayesian_search(query)
+        return self.logic.bayesian_search(query)
 
 
 class TwitterStreamScraper(tweepy.StreamListener):
