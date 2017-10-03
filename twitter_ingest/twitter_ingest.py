@@ -1,10 +1,8 @@
 import tweepy
-
 from logic_proc import logic_proc
-
-
 class TwitterIngest():
-    def __init__(self, consumer_key, consumer_secret, bot_mode=False, access_token=None, access_token_secret=None):
+    def __init__(self, consumer_key, consumer_secret, preclassified_file, \
+        geolocation_bounding_box, receiver_class, access_token=None, access_token_secret=None):
         print 'Starting CrowdRescue Twitter Autodiscovery Search Assistant and Bot a.k.a. SPICEY...'
         print 'Starting API...'
         self.api = None
@@ -20,17 +18,15 @@ class TwitterIngest():
         except Exception as e:
             print "Authentication Failed. " + str(e) + " Exiting..."
         print 'API connection established. Establishing Search and Starting scrapers...'
-        if bot_mode:
-            self.stream_scraper = TwitterStreamScraper()
-            self.scraper = tweepy.Stream(
-               auth=self.api.auth,
-               listener=self.stream_scraper)
-            self.start_scrapers()
-        self.logic = logic_proc.LogicProc(self.api)
+        self.stream_scraper = TwitterStreamScraper(receiver_class)
+        self.scraper = tweepy.Stream(
+           auth=self.api.auth,
+           listener=self.stream_scraper)
+        self.set_target(preclassified_file)
 
     def authenticate(self, consumer_key, consumer_secret):
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-        if self.access_token is None:
+        if self.access_token == '':
             # Get Access Token
             try:
                 redirect_url = auth.get_authorization_url()
@@ -52,87 +48,61 @@ class TwitterIngest():
         self.api = tweepy.API(auth)
         print 'Testing API connection...'
         print self.api.get_status('906653703402250242').text
+        print "Building Twitter Search Query..."
+        selfl.set_target
 
-    def start_scrapers(self):
-        self.search_filters()
+    def set_target(self, preclassified_file, geolocation_bounding_box,):
+        user_list, hashtag_list, phrase_list = self.build_query(
+            geolocation_bounding_box, preclassified_file)
+        self.start_monitoring(geolocation_bounding_box, user_list, hashtag_list, phrase_list)
 
-    def search_filters(self):
-        # Hashtag Gathering
-        hashtag_list = self.hashtags_to_monitor()
-        # Geographic Gathering
-        florida_bounding_box = self.geobounds_to_monitor()
-        # Phrases
-        ngram_list = self.ngrams_to_monitor()
+    def build_query(self, preclassified_file, geolocation_bounding_box):
+        preclassified_tweets = []
+        #Get the text of all tweets from the preclassified file.
+        with open (preclassified_file, 'rb') as csvfile:
+            csv_reader = csv.DictReader(csvfile)
+            for tweet in csv_reader:
+                preclassified_tweets.append(tweet) 
+        #Find all hashtags within the tweets in the file
+        user_list = self.discover_users(preclassified_tweets)
+        hashtag_list = self.discover_hashtags(preclassified_tweets)
+        phrase_list = self.discover_phrases(preclassified_tweets)
+        return user_list, hashtag_list, phrase_list
+        
+    def discover_users(self, tweets):
+        return t['user'] for t in tweets
 
-        track_list = hashtag_list.extend(ngram_list)
+    def discover_hashtags(self, tweets):
+        discovered_hashtags = []
+        for t['text'] in tweets:
+            discovered_hastags.extend(self.extract_hashtags(t))
+        return list(set(discovered_hastags))
+
+    def extract_hashtags(tweet):
+        return list(set(part.replace(',', '').replace('.', '') \
+            for part in tweet.split() if part.startswith('#')))
+
+    def discover_phrases(self, tweets):
+        return []
+
+    def start_monitoring(self, geolocation_bounding_box, user_list, hashtag_list, phrase_list):
         self.scraper.filter(
-            track=track_list,
-            locations=florida_bounding_box,
+            follow=user_list,
+            track=hashtag_list.extend(phrase_list),
+            locations=geolocation_bounding_box,
             async=True)
 
-    def hashtags_to_monitor(self):
-        hashtags = ["#irmasos",
-                    "#irmapetrescue",
-                    "#marcoisland",
-                    "#irmarescue",
-                    "#IRMASOS",
-                    "#sosIrma",
-                    "#FLKeys",
-                    "#floridakeys",
-                    "#florida",
-                    "#needrescue",
-                    "#needhelp",
-                    "#needwaterrescue",
-                    "#IRMAhelp",
-                    "#IrmaRescue",
-                    "#irmapets",
-                    "#irmapetrescue",
-                    "#irmapetsos",
-                    "#IRMA",
-                    "#IRMA2017",
-                    "#IRMAFlorida",
-                    "#hurricaneIRMA",
-                    "#huricaneIRMA",
-                    "#hurricanIRMA",
-                    "#hurrcaneIRMA",
-                    "#hurracaneIRMA",
-                    "#hurricaneirma2017",
-                    "#irmahurricane2017",
-                    "#IRMAhurricane",
-                    "#IRMAhuricane",
-                    "#IRMAhurrcane",
-                    "#IRMAhurracane",
-                    "#hurricane",
-                    "#huricane",
-                    "#hurican",
-                    "#hurracane",
-                    "#tornado",
-                    "#flood",
-                    "#flooded"]
-        return hashtags
-
-    def geobounds_to_monitor(self):
-        # Partial Florida, focused on southern.
-        geo_bounding_box = [-83.54, 24.27, -79.74, 29.13]
-        return geo_bounding_box
-
-    def ngrams_to_monitor(self):
-        ngrams = []  # Add the Harvey dataset n-grams after testing.
-        return ngrams
-
-    def bayesian_search(self, query):
-        return self.logic.bayesian_search(query)
-
-
 class TwitterStreamScraper(tweepy.StreamListener):
+    def __init__(self, receiver_class):
+        super(tweepy.StreamListener, self).__init__()
+        self.receiver_class = receiver_class
     def on_error(self, status_code):
         if status_code == 420:
             # returning False in on_data disconnects the stream
             return False
-
     def on_status(self, status):
         if not status.text[0:2] == "RT":
-            self.logic.add_new_message(status, 'twitter')
+            self.receiver_class.add_new_message(status, 'twitter')
 
 
 if __name__ == '__main__':

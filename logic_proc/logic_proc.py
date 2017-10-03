@@ -5,31 +5,22 @@ from slack_interface import slack_interface
 import os
 from textblob.classifiers import NaiveBayesClassifier
 import time
+from threading import Timer
 from database_interface import database_interface
-
-TRAINING_FILE = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "../train.csv")
-)
-
-
+from infinite_timer import infinite_timer
 class LogicProc:
-    def __init__(self, twitter_api, bot_mode=False):
-        self.bot_mode = bot_mode
-        self.twitter_api = twitter_api
-        print("Using training file: {}".format(TRAINING_FILE))
-        with open(TRAINING_FILE) as train_set:
+    def __init__(self, preclassified_file, channel):
+        with open(preclassified_file) as train_set:
             self.spam_classifier = NaiveBayesClassifier(train_set, format=None)
         self.slack_client = slack_interface.SlackInterface()
         self.message_queue = []
-        self.db_interface = database_interface.DatabaseInterface()
-        # self.run_loop()
-
-    def run_loop(self):
-        while True:
-            if self.message_queue != []:
-                self.proc_messages
-            else:
-                time.sleep(3)
+        self.last_message_ts = None
+        self.channel = channel
+        #self.db_interface = database_interface.DatabaseInterface()
+        self.check_twitter_msgs = infinite_timer.InfiniteTimer(5.0, self.proc_messages)
+        self.check_slack_msgs = infinite_timer.InfiniteTimer(60.0, self.update_classifer_from_slack(self.channel))
+        self.check_twitter_msgs.start()
+        self.check_slack_msgs.start()
 
     def add_new_message(self, msg, source):
         self.message_queue.append({'source': source, 'message': msg})
@@ -37,65 +28,47 @@ class LogicProc:
     def proc_messages(self):
         for msg in self.message_queue:
             if msg['source'] == 'twitter':
-                if self.is_spam(msg['message'].text) is False:
+                if quality_filter(msg['message'].text) == True:
                     self.post_to_slack(msg)
-                    self.store_message([msg['message'], False])
-                else:
                     self.store_message([msg['message'], True])
+                else:
+                    self.store_message([msg['message'], False])
             self.message_queue.remove(msg)
 
-    def is_spam(self, message_text):
+    def quality_filter(self, message_text):
+        # -filter useless hashtag announcements "Prayers for Irma! Use #IrmaSoS"
+        # -filter outside the geobounds
+        # -filter duplicates
+        # -bayesian filter
         if self.spam_classifier.classify(message_text) == 'neg':
             return False
         else:
             return True
 
+    def post_to_slack(self, msg, channel):
+        slack_client.post_message(channel=channel, text=msg.text)
+
+    def update_classifer_from_slack(self, channel):
+        slack_msgs = slack_client.get_slack_reactions(channel, self.last_message_ts)
+        self.last_message_ts = slack_msgs[-1]['ts']
+        bayesian_update_data = []
+        for m in slack_msgs:
+            user_feedback = self.is_slack_reaction_pos(m['reactions'])
+            if user_feedback == None:
+                pass
+            elif user_feedback == True:
+                bayesian_update_data.append((m.text, 'pos'))
+            elif user_feedback == False:
+                bayesian_update_data.append((m.text, 'neg'))
+
+    def is_slack_reaction_pos(reactions):
+        pass
+
+
+    def store_message(message, filter_classification):
+        pass
+
     def bayesian_search(self, query):
-        results = self.twitter_api.search(query)
+        results = self.api.search(query)
         filtered_results = [r for r in results if self.is_spam(r.text) == 0]
         return filtered_results
-
-    def post_to_slack(self, msg):
-        if self.bot_mode is True:
-            self.slack_client.api_call(
-                "chat.postMessage",
-                channel="@altuspresssec",
-                text=msg
-            )
-
-    def poll_slack_reactions(self):
-        pass
-
-    def store_messages(self, message):
-        self.db_interface.add(message)
-
-    def retrieve_message(self, msg):
-        pass
-
-    def message_exists(self, msg):
-        pass
-
-    def discover_search_terms(self, bounding_box, hashtags):
-        '''Find new relevant search terms based on incoming messages.
-
-        Given a geographical area and a list of hashtags, return a dictionary of lists
-        of new hashtags, specific locations within the geographical area, and n-grams
-        which represent significant events occuring within the geographical areas or related
-        to the list of input hashtags.'''
-        pass
-
-    def find_active_locations(self, bounding_box):
-        '''Find areas within the bounding box which have a high volume of tweets.'''
-        pass
-
-# 1. search for potential sos
-#     -search most common hashtags and n-grams
-#     -alert hashtag specific
-# 2. Filter / Detect
-#     -filter useless hashtag announcements "Prayers for Irma! Use #IrmaSoS"
-#     -filter outside the geobounds
-#     -filter duplicates
-#     -bayesian filter
-# 3. Relay
-#     -Write sos to file
-#     -Post to Slack

@@ -1,33 +1,21 @@
-from decouple import config
 from slackclient import SlackClient
-
+import os
 
 class SlackInterface:
-    def __init__(self):
-        slack_token = config('SLACK_TOKEN', default="")
-        self.sc = SlackClient(slack_token)
+    def __init__(self, slack_token):
+        self.slack = SlackClient(slack_token)
 
-    def post_to_slack(self, msg):
-        self.sc.api_call(
-          "chat.postMessage",
-          channel="@altuspresssec",
-          text=msg
-        )
+    def post_message(self, msg, channel):
+        self.slack.api_call("chat.postMessage", channel=channel, text=msg)
 
-    def poll_slack_reactions(self):
-        new_reacts_thing = {}
-        messages = self.sc.api_call(
-          "search.all",
-          query="from:TweetBot"
-        )['messages']['matches']
-        for i in messages:
-            reacts = self.sc.api_call(
-              "reactions.get",
-              full="true",
-              channel="C70127ZL1",
-              timestamp=i['ts']
-            )['message'].get('reactions', [])
-            new_reacts_thing[i['ts']] = []
-            for a in reacts:
-                new_reacts_thing[i['ts']].append({a['name']: a['count']})
-        return new_reacts_thing
+    def get_slack_reactions(self, channel, last_message_ts=None):
+        if last_message_ts == None:
+          messages = slack.api_call("channels.history", channel=channel)['messages']
+        else:
+          messages = slack.api_call("channels.history", channel=channel, \
+            oldest=self.last_message_ts, inclusive=True)['messages']
+        for m in messages:
+            m['reactions'] = slack.api_call("reactions.get", full="true", channel=channel, timestamp=m['ts'])\
+              ['message']['reactions']
+        return messages
+

@@ -1,7 +1,7 @@
 query = "Irma -filter:retweets AND -filter:replies"
 from twitter_ingest import twitter_ingest
-twitter_api_consumer_key = ''
-twitter_api_consumer_secret = ''
+twitter_api_consumer_key = 'lR8ZmpHW7O0DoCLmBBELWL96G'
+twitter_api_consumer_secret = 'aOJXxFnWNT5baCL1f6ujvlvNjJ0jUAGlp0mguJFo49zwzdKpRH'
 twitter_interface = twitter_ingest.TwitterIngest(twitter_api_consumer_key, 
 									twitter_api_consumer_secret, False)
 
@@ -16,4 +16,3 @@ for i in range (0, 300):
 	cur_max_id = search_results[-1].id
 	results.extend(search_results)
 	print len(results)
-	
