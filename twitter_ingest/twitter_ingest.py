@@ -62,15 +62,16 @@ class TwitterIngest():
         with open (preclassified_file, 'rb') as csvfile:
             csv_reader = csv.DictReader(csvfile)
             for tweet in csv_reader:
-                preclassified_tweets.append(tweet) 
+                preclassified_tweets.append(tweet)
         #Find all hashtags within the tweets in the file
         user_list = self.discover_users(preclassified_tweets)
         hashtag_list = self.discover_hashtags(preclassified_tweets)
         phrase_list = self.discover_phrases(preclassified_tweets)
         return user_list, hashtag_list, phrase_list
-        
+
     def discover_users(self, tweets):
-        return t['user'] for t in tweets
+        for t in tweets:
+            yield t['user']
 
     def discover_hashtags(self, tweets):
         discovered_hashtags = []

@@ -7,12 +7,16 @@ from textblob.classifiers import NaiveBayesClassifier
 import time
 from threading import Timer
 from database_interface import database_interface
-from infinite_timer import infinite_timer
+import infinite_timer
 class LogicProc:
-    def __init__(self, preclassified_file, channel):
-        with open(preclassified_file) as train_set:
+    def __init__(self, preclassified_file, channel, slack_token):
+
+        if ~os.path.isfile(preclassified_file):
+            print('"' + preclassified_file + '" does not exist!')
+
+        with open(preclassified_file,'r') as train_set:
             self.spam_classifier = NaiveBayesClassifier(train_set, format=None)
-        self.slack_client = slack_interface.SlackInterface()
+        self.slack_client = slack_interface.SlackInterface(slack_token)
         self.message_queue = []
         self.last_message_ts = None
         self.channel = channel
@@ -46,10 +50,10 @@ class LogicProc:
             return True
 
     def post_to_slack(self, msg, channel):
-        slack_client.post_message(channel=channel, text=msg.text)
+        self.slack_client.post_message(channel=channel, text=msg.text)
 
     def update_classifer_from_slack(self, channel):
-        slack_msgs = slack_client.get_slack_reactions(channel, self.last_message_ts)
+        slack_msgs = self.slack_client.get_slack_reactions(channel, self.last_message_ts)
         self.last_message_ts = slack_msgs[-1]['ts']
         bayesian_update_data = []
         for m in slack_msgs:

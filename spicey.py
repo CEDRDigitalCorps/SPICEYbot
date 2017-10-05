@@ -4,7 +4,7 @@ from decouple import config
 
 class Spicey:
 
-	def __init__(self):
+    def __init__(self):
         twitter_api_consumer_key = config("TWITTER_KEY", default="")
         twitter_api_consumer_secret = config("TWITTER_SECRET", default="")
         access_token = config("TWITTER_ACCESS_TOKEN", default=None)
@@ -17,11 +17,11 @@ class Spicey:
         channel = config("SLACK_CHANNEL", default="")
         geolocation_bounding_box = config("GEOLOCATION_BB", default="")
         logic_processing= logic_proc.LogicProc(preclassified_file, channel, slack_token)
-		twitter_interface = twitter_ingest.TwitterIngest(twitter_api_consumer_key, 
-											twitter_api_consumer_secret, preclassified_file,
+        twitter_interface = twitter_ingest.TwitterIngest(twitter_api_consumer_key,
+                                            twitter_api_consumer_secret, preclassified_file,
                                             geolocation_bounding_box, logic_processing)
 
-	def set_target(self, bounding_box):
+    def set_target(self, bounding_box):
         self.twitter_interface.set_target(bounding_box)
 
     def run_bot(self):
@@ -32,7 +32,7 @@ class Spicey:
 
 if __name__ == '__main__':
     spicey = Spicey()
-    puerto_rico_bb = {btm_left = {lat: 17.7307, lon: -68.1109}, 
+    puerto_rico_bb = {btm_left: {lat: 17.7307, lon: -68.1109},
                         top_right: {lat: 18.6664, lon: -65.0914}}
     spicey.set_target('preclassified_pr.csv', puerto_rico_bb)
     spicey.prepare_run()
