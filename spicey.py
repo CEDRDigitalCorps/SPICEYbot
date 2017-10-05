@@ -19,7 +19,9 @@ class Spicey:
         logic_processing= logic_proc.LogicProc(preclassified_file, channel, slack_token)
         twitter_interface = twitter_ingest.TwitterIngest(twitter_api_consumer_key,
                                             twitter_api_consumer_secret, preclassified_file,
-                                            geolocation_bounding_box, logic_processing)
+                                            geolocation_bounding_box, logic_processing,
+                                            access_token='',
+                                            access_token_secret='')
 
     def set_target(self, bounding_box):
         self.twitter_interface.set_target(bounding_box)

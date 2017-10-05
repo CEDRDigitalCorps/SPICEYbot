@@ -1,4 +1,5 @@
 import tweepy
+
 from logic_proc import logic_proc
 class TwitterIngest():
     def __init__(self, consumer_key, consumer_secret, preclassified_file, \
@@ -17,12 +18,13 @@ class TwitterIngest():
             print 'Success! Authenticated as User ' + self.api.me().name
         except Exception as e:
             print "Authentication Failed. " + str(e) + " Exiting..."
+            raise
         print 'API connection established. Establishing Search and Starting scrapers...'
         self.stream_scraper = TwitterStreamScraper(receiver_class)
         self.scraper = tweepy.Stream(
            auth=self.api.auth,
            listener=self.stream_scraper)
-        self.set_target(preclassified_file)
+        self.set_target(preclassified_file,geolocation_bounding_box)
 
     def authenticate(self, consumer_key, consumer_secret):
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
@@ -49,11 +51,11 @@ class TwitterIngest():
         print 'Testing API connection...'
         print self.api.get_status('906653703402250242').text
         print "Building Twitter Search Query..."
-        selfl.set_target
+        self.set_target
 
     def set_target(self, preclassified_file, geolocation_bounding_box,):
         user_list, hashtag_list, phrase_list = self.build_query(
-            geolocation_bounding_box, preclassified_file)
+            preclassified_file, geolocation_bounding_box)
         self.start_monitoring(geolocation_bounding_box, user_list, hashtag_list, phrase_list)
 
     def build_query(self, preclassified_file, geolocation_bounding_box):
