@@ -11,7 +11,7 @@ import infinite_timer
 class LogicProc:
     def __init__(self, preclassified_file, channel, slack_token):
 
-        if ~os.path.isfile(preclassified_file):
+        if os.path.isfile(preclassified_file)==False:
             print('"' + preclassified_file + '" does not exist!')
 
         with open(preclassified_file,'r') as train_set:
@@ -54,7 +54,8 @@ class LogicProc:
 
     def update_classifer_from_slack(self, channel):
         slack_msgs = self.slack_client.get_slack_reactions(channel, self.last_message_ts)
-        self.last_message_ts = slack_msgs[-1]['ts']
+        if len(slack_msgs)>0:
+            self.last_message_ts = slack_msgs[-1]['ts']
         bayesian_update_data = []
         for m in slack_msgs:
             user_feedback = self.is_slack_reaction_pos(m['reactions'])
