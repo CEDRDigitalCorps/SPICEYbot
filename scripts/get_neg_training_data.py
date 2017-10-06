@@ -3,7 +3,7 @@ from twitter_ingest import twitter_ingest
 twitter_api_consumer_key = 'lR8ZmpHW7O0DoCLmBBELWL96G'
 twitter_api_consumer_secret = 'aOJXxFnWNT5baCL1f6ujvlvNjJ0jUAGlp0mguJFo49zwzdKpRH'
 twitter_interface = twitter_ingest.TwitterIngest(twitter_api_consumer_key, 
-									twitter_api_consumer_secret, False)
+									twitter_api_consumer_secret)
 
 results = twitter_interface.api.search(query, result_type='recent')
 cur_max_id = results[-1].id

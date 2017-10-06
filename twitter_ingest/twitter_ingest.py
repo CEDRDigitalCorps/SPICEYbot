@@ -1,9 +1,11 @@
 import tweepy
-
+import webbrowser
+import csv
 from logic_proc import logic_proc
+
 class TwitterIngest():
-    def __init__(self, consumer_key, consumer_secret, preclassified_file, \
-        geolocation_bounding_box, receiver_class, access_token=None, access_token_secret=None):
+    def __init__(self, consumer_key, consumer_secret, preclassified_file=None, \
+        geolocation_bounding_box=None, receiver_class=None, access_token=None, access_token_secret=None):
         print 'Starting CrowdRescue Twitter Autodiscovery Search Assistant and Bot a.k.a. SPICEY...'
         print 'Starting API...'
         self.api = None
@@ -28,7 +30,7 @@ class TwitterIngest():
 
     def authenticate(self, consumer_key, consumer_secret):
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-        if self.access_token == '':
+        if self.access_token is None:
             # Get Access Token
             try:
                 redirect_url = auth.get_authorization_url()
@@ -36,9 +38,10 @@ class TwitterIngest():
             except tweepy.TweepError:
                 print 'Error! Failed to get request token.'
                 quit()
-            verifier = raw_input('Verifier Code:')
             try:
                 print "Please go to this URL and permission the application."
+                webbrowser.open(redirect_url)   
+                verifier = raw_input('Verifier Code:')
                 auth.get_access_token(verifier)
                 print "Verification successful. Access Token: " + str(auth.access_token)
                 print "Access Token Secret: " + str(auth.access_token_secret)
@@ -59,10 +62,12 @@ class TwitterIngest():
         self.start_monitoring(geolocation_bounding_box, user_list, hashtag_list, phrase_list)
 
     def build_query(self, preclassified_file, geolocation_bounding_box):
+        if preclassified_file is None:
+            return  [],[],[]
         preclassified_tweets = []
         #Get the text of all tweets from the preclassified file.
         with open (preclassified_file, 'rb') as csvfile:
-            csv_reader = csv.DictReader(csvfile)
+            csv_reader = csv.DictReader(csvfile, fieldnames=['text','pos'])
             for tweet in csv_reader:
                 preclassified_tweets.append(tweet)
         #Find all hashtags within the tweets in the file
@@ -73,17 +78,18 @@ class TwitterIngest():
 
     def discover_users(self, tweets):
         for t in tweets:
-            yield t['user']
+            yield t.get('user','')
 
     def discover_hashtags(self, tweets):
         discovered_hashtags = []
-        for t['text'] in tweets:
-            discovered_hastags.extend(self.extract_hashtags(t))
-        return list(set(discovered_hastags))
+        for t in tweets:
+            discovered_hashtags.extend(self.extract_hashtags(t))
+        return list(set(discovered_hashtags))
 
-    def extract_hashtags(tweet):
+    def extract_hashtags(self,tweet):
+        text = tweet['text']
         return list(set(part.replace(',', '').replace('.', '') \
-            for part in tweet.split() if part.startswith('#')))
+            for part in text.split() if part.startswith('#')))
 
     def discover_phrases(self, tweets):
         return []
@@ -91,7 +97,7 @@ class TwitterIngest():
     def start_monitoring(self, geolocation_bounding_box, user_list, hashtag_list, phrase_list):
         self.scraper.filter(
             follow=user_list,
-            track=hashtag_list.extend(phrase_list),
+            track=hashtag_list + phrase_list,
             locations=geolocation_bounding_box,
             async=True)
 
