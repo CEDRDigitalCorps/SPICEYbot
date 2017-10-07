@@ -4,16 +4,19 @@ import time
 class InfiniteTimer():
     """A Timer class that does not stop, unless you want it to."""
 
-    def __init__(self, seconds, target):
+    def __init__(self, seconds, target, *args):
         self._should_continue = False
         self.is_running = False
         self.seconds = seconds
         self.target = target
+        self.args   = args
         self.thread = None
 
     def _handle_target(self):
         self.is_running = True
-        self.target()
+        if self.args != None:
+            pass
+        self.target(*self.args)
         self.is_running = False
         self._start_timer()
 

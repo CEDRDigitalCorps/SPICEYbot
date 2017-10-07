@@ -8,6 +8,8 @@ import time
 from threading import Timer
 from database_interface import database_interface
 import infinite_timer
+import time
+
 class LogicProc:
     def __init__(self, preclassified_file, channel, slack_token):
 
@@ -22,22 +24,38 @@ class LogicProc:
         self.channel = channel
         #self.db_interface = database_interface.DatabaseInterface()
         self.check_twitter_msgs = infinite_timer.InfiniteTimer(5.0, self.proc_messages)
-        self.check_slack_msgs = infinite_timer.InfiniteTimer(60.0, self.update_classifer_from_slack(self.channel))
+        self.check_slack_msgs = infinite_timer.InfiniteTimer(60.0, self.update_classifer_from_slack, self.channel)
         self.check_twitter_msgs.start()
         self.check_slack_msgs.start()
 
     def add_new_message(self, msg, source):
+        """
+        Callback from Twitter when there is a new message
+        @param msg     The Twitter message, with all its attributes
+        @param source  Where the message came from.  Right now should only be 'twitter'
+        """
         self.message_queue.append({'source': source, 'message': msg})
 
     def proc_messages(self):
         for msg in self.message_queue:
             if msg['source'] == 'twitter':
-                if quality_filter(msg['message'].text) == True:
-                    self.post_to_slack(msg)
-                    self.store_message([msg['message'], True])
+                message = msg['message']
+                if self.quality_filter(message.text) == True:
+                    self.post_to_slack(message, self.channel)
+                    self.store_message(message, True)
                 else:
-                    self.store_message([msg['message'], False])
+                    self.store_message(message, False)
             self.message_queue.remove(msg)
+
+    def run_loop(self):
+        """
+         Not sure what this was originally intended to do..
+         now it runs proc_messages once a second
+        """
+        while True:
+           self.proc_messages()
+           # sleep between polling queue
+           time.sleep(1)
 
     def quality_filter(self, message_text):
         # -filter useless hashtag announcements "Prayers for Irma! Use #IrmaSoS"
@@ -50,7 +68,7 @@ class LogicProc:
             return True
 
     def post_to_slack(self, msg, channel):
-        self.slack_client.post_message(channel=channel, text=msg.text)
+        self.slack_client.post_message(msg.text, channel)
 
     def update_classifer_from_slack(self, channel):
         slack_msgs = self.slack_client.get_slack_reactions(channel, self.last_message_ts)
@@ -66,11 +84,11 @@ class LogicProc:
             elif user_feedback == False:
                 bayesian_update_data.append((m.text, 'neg'))
 
-    def is_slack_reaction_pos(reactions):
+    def is_slack_reaction_pos(self,reactions):
         pass
 
 
-    def store_message(message, filter_classification):
+    def store_message(self, message, filter_classification):
         pass
 
     def bayesian_search(self, query):

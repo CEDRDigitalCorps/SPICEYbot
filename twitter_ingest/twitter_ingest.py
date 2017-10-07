@@ -22,11 +22,12 @@ class TwitterIngest():
             print "Authentication Failed. " + str(e) + " Exiting..."
             raise
         print 'API connection established. Establishing Search and Starting scrapers...'
-        self.stream_scraper = TwitterStreamScraper(receiver_class)
+        self.stream_scraper = TwitterStreamScraper(receiver_class, self.api)
         self.scraper = tweepy.Stream(
            auth=self.api.auth,
            listener=self.stream_scraper)
-        self.set_target(preclassified_file,geolocation_bounding_box)
+        if preclassified_file != None:
+           self.set_target(preclassified_file,geolocation_bounding_box)
 
     def authenticate(self, consumer_key, consumer_secret):
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
@@ -77,8 +78,12 @@ class TwitterIngest():
         return user_list, hashtag_list, phrase_list
 
     def discover_users(self, tweets):
+        result = []
         for t in tweets:
-            yield t.get('user','')
+            user = t.get('user',None)
+            if user!=None:
+                result.append(user)
+        return result
 
     def discover_hashtags(self, tweets):
         discovered_hashtags = []
@@ -88,13 +93,20 @@ class TwitterIngest():
 
     def extract_hashtags(self,tweet):
         text = tweet['text']
-        return list(set(part.replace(',', '').replace('.', '') \
-            for part in text.split() if part.startswith('#')))
+        # only hash tags
+        # and skip '#' since its not a hash tag
+        # and skip just numbers, as its probably part of an address
+        raw_tags = [part for part in text.split() if part.startswith('#') \
+            and len(part)>1 \
+            and unicode(part[1:]).isnumeric()==False ]
+        return list(set(part.replace(',', '').replace('.', '')  for part in raw_tags))
+            
 
     def discover_phrases(self, tweets):
         return []
 
     def start_monitoring(self, geolocation_bounding_box, user_list, hashtag_list, phrase_list):
+        self.scraper.disconnect()
         self.scraper.filter(
             follow=user_list,
             track=hashtag_list + phrase_list,
@@ -102,14 +114,15 @@ class TwitterIngest():
             async=True)
 
 class TwitterStreamScraper(tweepy.StreamListener):
-    def __init__(self, receiver_class):
-        super(tweepy.StreamListener, self).__init__()
+    def __init__(self, receiver_class, api):
+        tweepy.StreamListener.__init__(self,api)
         self.receiver_class = receiver_class
     def on_error(self, status_code):
         if status_code == 420:
             # returning False in on_data disconnects the stream
             return False
     def on_status(self, status):
+        print '[' + status.text.encode('ascii','ignore') + ']'
         if not status.text[0:2] == "RT":
             self.receiver_class.add_new_message(status, 'twitter')
 
