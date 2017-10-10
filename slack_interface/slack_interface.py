@@ -10,17 +10,17 @@ class SlackInterface:
 
     def get_slack_reactions(self, channel, last_message_ts=None):
         if last_message_ts == None:
-            history = self.slack.api_call("channels.history", channel=channel)
+            history = self.slack.api_call("conversations.history", channel=channel)
             if 'ok' in history and history['ok'] == False:
                 print 'Could not get channel history'
                 messages = []
             else:
                 messages = history['messages']
         else:
-          messages = self.slack.api_call("channels.history", channel=channel, \
-            oldest=self.last_message_ts, inclusive=True)['messages']
+          messages = self.slack.api_call("conversations.history", channel=channel, \
+            oldest=last_message_ts, inclusive=True)['messages']
         for m in messages:
-            reactions = self.slack.api_call("reactions.get", full="true", channel=channel, timestamp=m['ts'])
-            m['reactions'] = reactions['message']['reactions']
+            reactions = self.slack.api_call("reactions.get", full="true", channel=channel, timestamp=m['ts'])            
+            m['reactions'] = reactions['message'].get('reactions',[])
         return messages
 

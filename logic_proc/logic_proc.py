@@ -23,10 +23,14 @@ class LogicProc:
         self.last_message_ts = None
         self.channel = channel
         #self.db_interface = database_interface.DatabaseInterface()
+
+        self.update_classifer_from_slack(self.channel)
+
         self.check_twitter_msgs = infinite_timer.InfiniteTimer(5.0, self.proc_messages)
         self.check_slack_msgs = infinite_timer.InfiniteTimer(60.0, self.update_classifer_from_slack, self.channel)
         self.check_twitter_msgs.start()
         self.check_slack_msgs.start()
+
 
     def add_new_message(self, msg, source):
         """
@@ -53,7 +57,6 @@ class LogicProc:
          now it runs proc_messages once a second
         """
         while True:
-           self.proc_messages()
            # sleep between polling queue
            time.sleep(1)
 
@@ -62,7 +65,8 @@ class LogicProc:
         # -filter outside the geobounds
         # -filter duplicates
         # -bayesian filter
-        if self.spam_classifier.classify(message_text) == 'neg':
+        result = self.spam_classifier.classify(message_text)
+        if result == 'neg':
             return False
         else:
             return True
@@ -77,15 +81,26 @@ class LogicProc:
         bayesian_update_data = []
         for m in slack_msgs:
             user_feedback = self.is_slack_reaction_pos(m['reactions'])
+            text = m['text']
             if user_feedback == None:
                 pass
             elif user_feedback == True:
-                bayesian_update_data.append((m.text, 'pos'))
+                bayesian_update_data.append((text, 'pos'))
             elif user_feedback == False:
-                bayesian_update_data.append((m.text, 'neg'))
+                bayesian_update_data.append((text, 'neg'))
+        # update for better results
+        print 'updating...'
+        self.spam_classifier.update(bayesian_update_data)
+        print 'done...'
 
     def is_slack_reaction_pos(self,reactions):
-        pass
+        for t in reactions:
+           name = t['name']
+           if name == '-1':
+               return False
+           if name == '+1':
+               return True
+        return None
 
 
     def store_message(self, message, filter_classification):

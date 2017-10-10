@@ -9,6 +9,8 @@ class TwitterIngest():
         print 'Starting CrowdRescue Twitter Autodiscovery Search Assistant and Bot a.k.a. SPICEY...'
         print 'Starting API...'
         self.api = None
+        self.preclassified_file = None
+        self.geolocation_bounding_box = None
         consumer_key = consumer_key
         consumer_secret = consumer_secret
         self.access_token = access_token
@@ -22,7 +24,7 @@ class TwitterIngest():
             print "Authentication Failed. " + str(e) + " Exiting..."
             raise
         print 'API connection established. Establishing Search and Starting scrapers...'
-        self.stream_scraper = TwitterStreamScraper(receiver_class, self.api)
+        self.stream_scraper = TwitterStreamScraper(receiver_class, self.api, self._start)
         self.scraper = tweepy.Stream(
            auth=self.api.auth,
            listener=self.stream_scraper)
@@ -57,7 +59,13 @@ class TwitterIngest():
         print "Building Twitter Search Query..."
         self.set_target
 
+    def _start(self):
+        self.scraper.disconnect()
+        self.set_target(self.preclassified_file, self.geolocation_bounding_box)
+
     def set_target(self, preclassified_file, geolocation_bounding_box,):
+        self.preclassified_file = preclassified_file
+        self.geolocation_bounding_box = geolocation_bounding_box
         user_list, hashtag_list, phrase_list = self.build_query(
             preclassified_file, geolocation_bounding_box)
         self.start_monitoring(geolocation_bounding_box, user_list, hashtag_list, phrase_list)
@@ -93,12 +101,14 @@ class TwitterIngest():
 
     def extract_hashtags(self,tweet):
         text = tweet['text']
+        if tweet['pos'] == 'neg':
+            return []
         # only hash tags
         # and skip '#' since its not a hash tag
         # and skip just numbers, as its probably part of an address
         raw_tags = [part for part in text.split() if part.startswith('#') \
             and len(part)>1 \
-            and unicode(part[1:]).isnumeric()==False ]
+            and unicode(part[1:],'utf8').isnumeric()==False ]
         return list(set(part.replace(',', '').replace('.', '')  for part in raw_tags))
             
 
@@ -114,18 +124,23 @@ class TwitterIngest():
             async=True)
 
 class TwitterStreamScraper(tweepy.StreamListener):
-    def __init__(self, receiver_class, api):
+    def __init__(self, receiver_class, api, restart=None):
         tweepy.StreamListener.__init__(self,api)
         self.receiver_class = receiver_class
+        self.restart = restart
     def on_error(self, status_code):
         if status_code == 420:
             # returning False in on_data disconnects the stream
             return False
     def on_status(self, status):
-        print '[' + status.text.encode('ascii','ignore') + ']'
         if not status.text[0:2] == "RT":
             self.receiver_class.add_new_message(status, 'twitter')
 
+    def on_exception(self, ex):
+        import traceback
+        traceback.print_exc()
+        if self.restart != None:
+            self.restart()
 
 if __name__ == '__main__':
     twitter_connection = TwitterInterface()
