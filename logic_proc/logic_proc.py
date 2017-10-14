@@ -21,7 +21,9 @@ class LogicProc:
         self.slack_client = slack_interface.SlackInterface(slack_token)
         self.message_queue = []
         self.last_message_ts = None
-        self.channel = channel
+        self.channel = self.slack_client.get_channel_id(channel)
+        if self.channel==None:
+            print 'Could not find channel ' + channel
         #self.db_interface = database_interface.DatabaseInterface()
 
         self.update_classifer_from_slack(self.channel)
@@ -92,6 +94,7 @@ class LogicProc:
         print 'updating...'
         self.spam_classifier.update(bayesian_update_data)
         print 'done...'
+        self.spam_classifier.show_informative_features()
 
     def is_slack_reaction_pos(self,reactions):
         for t in reactions:
