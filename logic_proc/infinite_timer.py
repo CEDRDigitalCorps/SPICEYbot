@@ -16,7 +16,11 @@ class InfiniteTimer():
         self.is_running = True
         if self.args != None:
             pass
-        self.target(*self.args)
+        try:
+           self.target(*self.args)
+        except Exception as exc:
+           print("ERROR")
+           print exc
         self.is_running = False
         self._start_timer()
 
