@@ -9,6 +9,7 @@ from threading import Timer
 from database_interface import database_interface
 import infinite_timer
 import time
+import pickle
 
 class LogicProc:
     def __init__(self, preclassified_file, channel, slack_token):
@@ -16,17 +17,22 @@ class LogicProc:
         if os.path.isfile(preclassified_file)==False:
             print('"' + preclassified_file + '" does not exist!')
 
-        with open(preclassified_file,'r') as train_set:
+        with open(preclassified_file,'r') as train_set:   
             self.spam_classifier = NaiveBayesClassifier(train_set, format=None)
+
         self.slack_client = slack_interface.SlackInterface(slack_token)
         self.message_queue = []
         self.last_message_ts = None
         self.channel = self.slack_client.get_channel_id(channel)
         if self.channel==None:
             print 'Could not find channel ' + channel
-        #self.db_interface = database_interface.DatabaseInterface()
+        self.db_interface = database_interface.DB()
 
+        training = self.db_interface.get_training_data()
+        self.spam_classifier.update(training)
         self.update_classifer_from_slack(self.channel)
+
+        self.spam_classifier.show_informative_features()
 
         self.check_twitter_msgs = infinite_timer.InfiniteTimer(5.0, self.proc_messages)
         self.check_slack_msgs = infinite_timer.InfiniteTimer(60.0, self.update_classifer_from_slack, self.channel)
@@ -48,9 +54,9 @@ class LogicProc:
                 message = msg['message']
                 if self.quality_filter(message.text) == True:
                     self.post_to_slack(message, self.channel)
-                    self.store_message(message, True)
+                    self.store_message(message.text, True)
                 else:
-                    self.store_message(message, False)
+                    self.store_message(message.text, False)
             self.message_queue.remove(msg)
 
     def run_loop(self):
@@ -91,7 +97,11 @@ class LogicProc:
             elif user_feedback == False:
                 bayesian_update_data.append((text, 'neg'))
         # update for better results
-        print 'updating...'
+        print 'updating db...'
+        # update DB
+        self.db_interface.update(bayesian_update_data);
+        # update classifier
+        print 'updating classifier...'
         self.spam_classifier.update(bayesian_update_data)
         print 'done...'
         self.spam_classifier.show_informative_features()
@@ -106,9 +116,9 @@ class LogicProc:
         return None
 
 
-    def store_message(self, message, filter_classification):
-        pass
-
+    def store_message(self, message, filter_classification, source='twitter'):
+        self.db_interface.add(message,filter_classification, source)
+        
     def bayesian_search(self, query):
         results = self.api.search(query)
         filtered_results = [r for r in results if self.is_spam(r.text) == 0]
