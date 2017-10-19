@@ -24,10 +24,8 @@ class TwitterIngest():
             print "Authentication Failed. " + str(e) + " Exiting..."
             raise
         print 'API connection established. Establishing Search and Starting scrapers...'
-        self.stream_scraper = TwitterStreamScraper(receiver_class, self.api, self._start)
-        self.scraper = tweepy.Stream(
-           auth=self.api.auth,
-           listener=self.stream_scraper)
+        self.stream_scraper = TwitterStreamScraper(receiver_class, self.api, restart=self._restart)
+        self.scrapper       = None
         if preclassified_file != None:
            self.set_target(preclassified_file,geolocation_bounding_box)
 
@@ -57,17 +55,22 @@ class TwitterIngest():
         print 'Testing API connection...'
         print self.api.get_status('906653703402250242').text
         print "Building Twitter Search Query..."
-        self.set_target
+        
 
-    def _start(self):
-        self.scraper.disconnect()
+    def _restart(self):
+        """
+        Start streaming tweets
+        """
         self.set_target(self.preclassified_file, self.geolocation_bounding_box)
 
-    def set_target(self, preclassified_file, geolocation_bounding_box,):
+
+    def set_target(self, preclassified_file, geolocation_bounding_box):
         self.preclassified_file = preclassified_file
         self.geolocation_bounding_box = geolocation_bounding_box
         user_list, hashtag_list, phrase_list = self.build_query(
             preclassified_file, geolocation_bounding_box)
+
+        # need to restart and the query target has changed
         self.start_monitoring(geolocation_bounding_box, user_list, hashtag_list, phrase_list)
 
     def build_query(self, preclassified_file, geolocation_bounding_box):
@@ -100,7 +103,7 @@ class TwitterIngest():
         return list(set(discovered_hashtags))
 
     def extract_hashtags(self,tweet):
-        text = tweet['text']
+        text = tweet['text'].encode('utf8')
         if tweet['pos'] == 'neg':
             return []
         # only hash tags
@@ -116,7 +119,25 @@ class TwitterIngest():
         return []
 
     def start_monitoring(self, geolocation_bounding_box, user_list, hashtag_list, phrase_list):
-        self.scraper.disconnect()
+
+        print "Starting twitter thread"
+        print(hashtag_list + phrase_list)
+
+        if self.scrapper != None:
+           self.scraper.disconnect()
+
+        # need to make a new scrapper, as calling 'filter'
+        # starts up a thread, and there is NO WAY (currently) to
+        # wait for it to exit.
+        # Instead, call 'disconnect' on the old thread and let it
+        # get GC'd, while a new thread is started below
+        
+        # make new object
+        self.scraper = tweepy.Stream(
+           auth=self.api.auth,
+           listener=self.stream_scraper)
+
+        # start the new thread
         self.scraper.filter(
             follow=user_list,
             track=hashtag_list + phrase_list,
