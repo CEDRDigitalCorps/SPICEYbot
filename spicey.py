@@ -1,6 +1,7 @@
 from twitter_ingest import twitter_ingest
 from logic_proc import logic_proc
 from decouple import config
+import sys
 
 class Spicey:
 
@@ -44,10 +45,15 @@ class Spicey:
             quit()
 
 if __name__ == '__main__':
+
+    reload(sys)  
+    sys.setdefaultencoding('utf8')    
     spicey = Spicey()
-    puerto_rico_bb = [17.7307, -68.1109, 18.6664,-65.0914]
-    spicey.set_target('preclassified_pr.csv', 
-                       puerto_rico_bb)
+    
+    # target is set in settings.ini
+    # calling this again will just cause things to retrain
+    # puerto_rico_bb = [17.7307, -68.1109, 18.6664,-65.0914]
+    #spicey.set_target('train.csv', None)
     spicey.prepare_run()
     spicey.run_bot()
 

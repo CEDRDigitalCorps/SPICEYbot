@@ -18,7 +18,8 @@ class LogicProc:
             print('"' + preclassified_file + '" does not exist!')
 
         with open(preclassified_file,'r') as train_set:   
-            self.spam_classifier = NaiveBayesClassifier(train_set, format=None)
+            print 'training from ' + preclassified_file
+            self.spam_classifier = NaiveBayesClassifier(train_set, format="csv")
 
         self.slack_client = slack_interface.SlackInterface(slack_token)
         self.message_queue = []
@@ -53,9 +54,11 @@ class LogicProc:
             if msg['source'] == 'twitter':
                 message = msg['message']
                 if self.quality_filter(message.text) == True:
+                    print 'GOOD: ' + message.text.encode('utf-8')
                     self.post_to_slack(message, self.channel)
                     self.store_message(message.text, True)
                 else:
+                    print 'BAD: ' + message.text.encode('utf-8')
                     self.store_message(message.text, False)
             self.message_queue.remove(msg)
 
@@ -96,15 +99,16 @@ class LogicProc:
                 bayesian_update_data.append((text, 'pos'))
             elif user_feedback == False:
                 bayesian_update_data.append((text, 'neg'))
-        # update for better results
-        print 'updating db...'
-        # update DB
-        self.db_interface.update(bayesian_update_data);
-        # update classifier
-        print 'updating classifier...'
-        self.spam_classifier.update(bayesian_update_data)
-        print 'done...'
-        self.spam_classifier.show_informative_features()
+        # update for better results if we can
+        if len(bayesian_update_data) > 0:
+          print 'updating db...'
+          # update classification in DB
+          self.db_interface.update(bayesian_update_data);
+          # update classifier
+          print 'updating classifier...'
+          self.spam_classifier.update(bayesian_update_data)
+          print 'done...'
+          self.spam_classifier.show_informative_features()
 
     def is_slack_reaction_pos(self,reactions):
         for t in reactions:

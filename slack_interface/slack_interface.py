@@ -29,7 +29,6 @@ class SlackInterface:
         return None
 
     def post_message(self, msg, channel):
-        print msg.encode('utf8')
         self.slack.api_call("chat.postMessage", channel=channel, text=msg)
 
     def get_slack_reactions(self, channel, last_message_ts=None):
@@ -45,6 +44,7 @@ class SlackInterface:
             oldest=last_message_ts, inclusive=True)['messages']
         for m in messages:
               reactions = self.slack.api_call("reactions.get", full="true", channel=channel, timestamp=m['ts'])            
+              # only look at messages from bot
               if 'bot_id' in m:
                  m['reactions'] = reactions['message'].get('reactions',[])
               else:
