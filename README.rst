@@ -53,7 +53,7 @@ Twitter and Slack credentials are needed, create a ``settings.ini`` file with th
    DATABASE_USER=<db-user>
    DATABASE_PASSWORD=
    GEOLOCATION_BB=<x1,y1,x2,y2>
-   PRECLASSIFIED_FILE=<train.csv>
+   PRECLASSIFIED_FILE=train.csv
 
 Replacing the ``<*>`` strings with relevant keys, secrets, and tokens
 
