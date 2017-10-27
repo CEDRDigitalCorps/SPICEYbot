@@ -4,20 +4,28 @@ Social Precision Insight of Crowdsourced EmergencY - SPICEY
 Setup
 -----
 
-Create a virtual environment for the project.
+SPICEYbot uses Python 2.7 -- there are some syntax issues that cause it not to work with Python 3.
+
+Determine whether you are running Python 2 or Python 3 as the default Python version with
 
 .. code-block:: bash
 
-  $ virtualenv spicey_env -p <path to Python 3 on your machine>
+  $ python -v
 
-To find out the path to Python 3, run these commands:
+You will need to create the virtualenv with Python 2. (Install Python 2.7 if you don't have it.)
+
+Create a virtual environment for the project. If Python 2 is your default:
 
 .. code-block:: bash
 
-  $ python3 -v
-  $ python -v # if the python3 command doesn't return anything
+  $ virtualenv spicey_env -p
 
-You might have to install Python 3 if you haven't already.
+If Python 3 is your default:
+
+.. code-block:: bash
+
+  $ virtualenv spicey_env -p <path to Python 2 on your machine>
+
 
 Once you have the virtual environment made, activate it.
 
@@ -47,12 +55,12 @@ Twitter and Slack credentials are needed, create a ``settings.ini`` file with th
    TWITTER_ACCESS_TOKEN_SECRET=<your access secret>
    SLACK_TOKEN=<your-slack-token>
    SLACK_CHANNEL=<channel name or id>
-   DATABASE_NAME=<db-table>
+   DATABASE_NAME=spicey.db
    DATABASE_HOST=
-   DATABASE_TABLE=<db-table>
-   DATABASE_USER=<db-user>
-   DATABASE_PASSWORD=
-   GEOLOCATION_BB=<x1,y1,x2,y2>
+   DATABASE_TABLE=messages
+   DATABASE_USER=<type whatever you want your DB user to be called here>
+   DATABASE_PASSWORD=<type whatever you want your DB password to be here>
+   GEOLOCATION_BB=
    PRECLASSIFIED_FILE=train.csv
 
 Replacing the ``<*>`` strings with relevant keys, secrets, and tokens
@@ -66,8 +74,21 @@ To get a SLACK_TOKEN goto https://api.slack.com/apps and add a new app.
 Running
 -------
 
+
   Run python spicey.py
   After about a minute tweets will be posted to the channel.  Tag correct tweets
   with :+1: and incorrect tweets with :-1:.  The bot will come back through and retrain
   base on the recommendation.
 
+<<<<<<< HEAD
+=======
+
+Deployment
+----------
+
+The run the deployment code script on server;
+
+.. code-block:: bash
+
+   $ /var/www/assistsearch/app/scripts/update.sh
+>>>>>>> 224ae2a... update readme for Python 2 and db setup
