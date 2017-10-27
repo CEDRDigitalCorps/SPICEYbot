@@ -71,7 +71,7 @@ KEY and SECRET provided.
 Slack Setup
 -----------
 
-To get a SLACK_TOKEN you will need to .. _make a Slack bot user:: https://api.slack.com/bot-users and give it permission to post in the Crowd Rescue Slack.
+To get a SLACK_TOKEN you will need to .. _`make a Slack bot user`:: https://api.slack.com/bot-users and give it permission to post in the Crowd Rescue Slack.
 
 You will also need to copy the bot user's API token into settings.ini as SLACK_TOKEN.
 
