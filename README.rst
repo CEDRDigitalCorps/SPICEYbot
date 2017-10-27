@@ -63,25 +63,47 @@ Twitter and Slack credentials are needed, create a ``settings.ini`` file with th
    GEOLOCATION_BB=
    PRECLASSIFIED_FILE=train.csv
 
-Replacing the ``<*>`` strings with relevant keys, secrets, and tokens
+Replacing the ``<*>`` strings with relevant keys, secrets, and tokens--see the Slack Setup section below to learn how to get these for Slack.
 
 To get a Twitter Key go to https://apps.twitter.com/ and create an app.  Use the
-KEY and SECRET provided.  When SPICEY first tries to connect, it will open a browser
-window to authorize the application.  Once authorized SPICIE will print your TOKEN
-and TOKEN_SECRET.  Save this and put them in the settings.ini
+KEY and SECRET provided.
 
-To get a SLACK_TOKEN goto https://api.slack.com/apps and add a new app.
+Slack Setup
+-----------
+
+To get a SLACK_TOKEN you will need to .. _make a Slack bot user:: https://api.slack.com/bot-users and give it permission to post in the Crowd Rescue Slack.
+
+You will also need to copy the bot user's API token into settings.ini as SLACK_TOKEN.
+
+.. image:: img/bot_token.png
+
+For local testing, please authorize your bot to post in a private message with yourself. You can do this by:
+
+* creating the bot user as specified in the link above
+* sending a private message to the bot user to open a channel
+* clicking on the private message channel with your bot user. Go to the URL bar and look for the chat's ID:
+
+.. image:: img/bot_user.png
+
+.. code-block
+  https://crowdrescuehq.slack.com/messages/<your chat ID with the bot user will be here>/
+
+* Then put the chat ID into setup.ini as SLACK_CHANNEL.
+
 Running
 -------
 
+After you have done the above setup and activated your virtual environment, run:
 
-  Run python spicey.py
+.. code-block:: bash
+  $ python spicey.py
+
+It will connect to the social media channels, create a database, and begin posting to your Slack channel. Close the tab it's running in to kill the process.
+
   After about a minute tweets will be posted to the channel.  Tag correct tweets
   with :+1: and incorrect tweets with :-1:.  The bot will come back through and retrain
   base on the recommendation.
 
-<<<<<<< HEAD
-=======
 
 Deployment
 ----------
@@ -91,4 +113,3 @@ The run the deployment code script on server;
 .. code-block:: bash
 
    $ /var/www/assistsearch/app/scripts/update.sh
->>>>>>> 224ae2a... update readme for Python 2 and db setup
